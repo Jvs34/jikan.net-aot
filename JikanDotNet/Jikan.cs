@@ -74,17 +74,26 @@ namespace JikanDotNet
 			var requestUrl = string.Join("/", routeSections);
 			try
 			{
-				using var response = await _limiter.LimitAsync(() => _httpClient.GetAsync(requestUrl, cancellationToken));
+				using var response = await _limiter.LimitAsync(() => _httpClient.GetAsync(requestUrl ,HttpCompletionOption.ResponseHeadersRead, cancellationToken));
 				if (response.IsSuccessStatusCode)
 				{
+#if NET10_0_OR_GREATER
+					using var content = await response.Content.ReadAsStreamAsync();
+					returnedObject = (T) await JsonSerializer.DeserializeAsync( content, typeof( T ), JikanSourceGeneratedContext.Default, cancellationToken);
+#else
 					var json = await response.Content.ReadAsStringAsync();
-
 					returnedObject = JsonSerializer.Deserialize<T>(json);
+#endif
 				}
 				else if (!_jikanConfiguration.SuppressException)
 				{
+#if NET10_0_OR_GREATER
+					using var content = await response.Content.ReadAsStreamAsync();
+					var errorData = (JikanApiError) await JsonSerializer.DeserializeAsync( content, typeof( JikanApiError ), JikanSourceGeneratedContext.Default, cancellationToken);
+#else
 					var json = await response.Content.ReadAsStringAsync();
 					var errorData = JsonSerializer.Deserialize<JikanApiError>(json);
+#endif
 					throw new JikanRequestException(string.Format(ErrorMessagesConst.FailedRequest, response.StatusCode, response.Content), errorData);
 				}
 			}
@@ -98,7 +107,7 @@ namespace JikanDotNet
 			return returnedObject;
 		}
 
-        #endregion Private Methods
+#endregion Private Methods
 
 		#region Public Methods
 

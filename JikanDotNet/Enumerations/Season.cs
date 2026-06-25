@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Net;
 using System.Text.Json.Serialization;
 
 namespace JikanDotNet
@@ -6,7 +7,11 @@ namespace JikanDotNet
 	/// <summary>
 	/// Enumeration representing seasons of year.
 	/// </summary>
+#if NET10_0_OR_GREATER
+	[JsonConverter(typeof(JsonStringEnumConverter<Season>))]
+#else
 	[JsonConverter(typeof(JsonStringEnumConverter))]
+#endif
 	public enum Season
 	{
 		/// <summary>

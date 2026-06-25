@@ -12,7 +12,11 @@ namespace JikanDotNet
 		/// Response code received from HttpResponseMessage.
 		/// </summary>
 		[JsonPropertyName("status")]
+#if NET10_0_OR_GREATER
+		[JsonConverter(typeof(JsonStringEnumConverter<HttpStatusCode>))]
+#else
 		[JsonConverter(typeof(JsonStringEnumConverter))]
+#endif
 		public HttpStatusCode Status { get; set; }
 
 		/// <summary>
