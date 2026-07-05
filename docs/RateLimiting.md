@@ -1,15 +1,15 @@
 # Rate Limiting
 
-Jikan v4 API supports the following quota rules:
+Jikan v4 API supports the following quota rules for the public instance:
 
 - Cached requests do not count towards the limit
-- 2 requests per second
-- 30 requests per minute
+- 3 requests per second
+- 60 requests per minute
 - Daily limit: Unlimited
 
 Exceeding the limit returns HTTP 429 (Too Many Requests).
 
-Jikan.net supports rate limiting by default (versions 2.6.0 or newer). Configure it via `JikanClientConfiguration` and `TaskLimiterConfiguration`. Each configuration defines a rule: max number of calls and the timespan in which they can be made.
+Jikan.net applies client-side rate limiting by default. Configure it via `JikanClientConfiguration` and `TaskLimiterConfiguration`. Each configuration defines a rule: max number of calls and the timespan in which they can be made.
 
 Each Jikan instance can have its own rate limiter configuration, which does not count towards global calls made from your application.
 
