@@ -16,29 +16,50 @@ PM> Install-Package JikanDotNet
 dotnet add package JikanDotNet
 ```
 
-Then restore dependencies:
-
-```
-dotnet restore
-```
+Supported target frameworks: `netstandard2.0`, `net6.0`, `net8.0`, and `net10.0`.
 
 ## Initialization
 
 Initialize a `Jikan` instance to make requests:
 
 ```csharp
+using JikanDotNet;
+
 IJikan jikan = new Jikan();
 ```
 
-For custom configuration (endpoint, rate limiting, etc.), use `JikanClientConfiguration`:
+For custom configuration (rate limiting, exception handling, etc.), use `JikanClientConfiguration`:
 
 ```csharp
+using JikanDotNet;
+using JikanDotNet.Config;
+
 var config = new JikanClientConfiguration
 {
-    Endpoint = "https://api.jikan.moe/v4"
+    SuppressException = false,
+    LimiterConfigurations = TaskLimiterConfiguration.Default
 };
 var jikan = new Jikan(config);
 ```
+
+See [Rate Limiting](RateLimiting.md) for limiter options.
+
+To customize the HTTP client (base address, timeout, headers, etc.), pass an `HttpClient` to the constructor:
+
+```csharp
+using JikanDotNet;
+using JikanDotNet.Config;
+using System.Net.Http;
+
+var httpClient = new HttpClient
+{
+    BaseAddress = new Uri("https://api.jikan.moe/v4/"),
+    Timeout = TimeSpan.FromSeconds(10)
+};
+var jikan = new Jikan(new JikanClientConfiguration(), httpClient);
+```
+
+Use a trailing slash on `BaseAddress` so relative request paths resolve correctly.
 
 ## Dependency Injection
 
@@ -76,26 +97,39 @@ var services = new ServiceCollection()
     .BuildServiceProvider();
 ```
 
+The parameterless `Jikan()` constructor is used, which applies default configuration and the public Jikan API endpoint.
+
 ### HttpClientFactory
 
-For custom HttpClient (timeout, base address, etc.):
+`Jikan` accepts an injected `HttpClient`, but it does not expose an `HttpClient`-only constructor, so `AddHttpClient<IJikan, Jikan>()` is not supported. Register a named client and construct `Jikan` manually instead:
 
 ```csharp
-services.AddHttpClient<IJikan, Jikan>(client =>
+services.AddHttpClient("Jikan", client =>
 {
+    client.BaseAddress = new Uri("https://api.jikan.moe/v4/");
     client.Timeout = TimeSpan.FromSeconds(10);
-    client.BaseAddress = new Uri("https://api.jikan.moe/v4");
+});
+
+services.AddSingleton<IJikan>(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient("Jikan");
+    return new Jikan(new JikanClientConfiguration(), httpClient);
 });
 ```
 
 ## Using Own Instance of Jikan API
 
-To use a self-hosted instance of the Jikan REST API instead of the public one, set the `Endpoint` in `JikanClientConfiguration`:
+To use a self-hosted instance of the Jikan REST API instead of the public one, set `HttpClient.BaseAddress` when constructing `Jikan`:
 
 ```csharp
-var config = new JikanClientConfiguration
+using JikanDotNet;
+using JikanDotNet.Config;
+using System.Net.Http;
+
+var httpClient = new HttpClient
 {
-    Endpoint = "https://your-jikan-instance.example.com/v4"
+    BaseAddress = new Uri("https://your-jikan-instance.example.com/v4/")
 };
-var jikan = new Jikan(config);
+var jikan = new Jikan(new JikanClientConfiguration(), httpClient);
 ```

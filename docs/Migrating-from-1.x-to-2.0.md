@@ -7,9 +7,11 @@ Jikan v4 introduced breaking changes to the API structure. Updating from Jikan.n
 | Was (v3) | Is (v4) |
 |----------|---------|
 | `Jikan()` | `Jikan()` |
-| `Jikan("endpoint")` | `Jikan(new JikanClientConfiguration { Endpoint = "endpoint" })` |
+| `Jikan("endpoint")` | `new Jikan(new JikanClientConfiguration(), new HttpClient { BaseAddress = new Uri("endpoint") })` |
 | `Jikan(true, true)` | `Jikan(new JikanClientConfiguration { SuppressException = true })` |
-| `Jikan("endpoint", true)` | `Jikan(new JikanClientConfiguration { Endpoint = "endpoint", SuppressException = true })` |
+| `Jikan("endpoint", true)` | `new Jikan(new JikanClientConfiguration { SuppressException = true }, new HttpClient { BaseAddress = new Uri("endpoint") })` |
+
+`JikanClientConfiguration` no longer has an `Endpoint` property. Pass a custom `HttpClient` with the desired `BaseAddress` instead. Use a trailing slash on the base address (for example `https://api.jikan.moe/v4/`).
 
 ## Retrieving Data
 
